@@ -1,0 +1,13 @@
+[package]
+name = "game2"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+anyhow = { version = "1.0.79", features = ["backtrace"] }
+bytemuck = { version = "1.14.3", features = ["derive"] }
+encase = "0.7.0"
+pollster = "0.3.0"
+wgpu = "0.19.1"
+winit = "0.29.10"
+xalloc = "0.2.7"
