@@ -1,5 +1,6 @@
 pub mod color;
 mod game;
+pub mod math;
 
 use game::Game;
 use std::sync::Arc;
