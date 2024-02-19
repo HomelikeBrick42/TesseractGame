@@ -15,6 +15,13 @@ struct Ray {
     direction: vec4<f32>,
 }
 
+struct Hit {
+    hit: bool,
+    position: vec4<f32>,
+    normal: vec4<f32>,
+    color: vec3<f32>,
+}
+
 struct Block {
     color: vec3<f32>,
     exists: u32,
@@ -28,7 +35,10 @@ struct Chunk {
 @binding(0)
 var<storage, read> chunk: Chunk;
 
-fn trace_ray(ray: Ray) -> vec3<f32> {
+fn trace_ray(ray: Ray) -> Hit {
+    var hit: Hit;
+    hit.hit = false;
+
     let step_sizes = 1.0 / abs(ray.direction);
     let step_dir = vec4<i32>(sign(ray.direction));
     var next_dist = (vec4<f32>(step_dir) * 0.5 + 0.5 - fract(ray.origin)) / ray.direction;
@@ -42,14 +52,20 @@ fn trace_ray(ray: Ray) -> vec3<f32> {
         voxel_pos += step_axis * step_dir;
         next_dist -= closest_dist;
         next_dist += step_sizes * vec4<f32>(step_axis);
-        let normal = -step_axis * step_dir;
 
         if all(voxel_pos >= vec4<i32>(0)) && all(voxel_pos < vec4<i32>(4)) {
-            return chunk.data[u32(voxel_pos.x) + u32(voxel_pos.y) * 4 + u32(voxel_pos.z) * 4 * 4 + u32(voxel_pos.w) * 4 * 4 * 4].color;
+            let index = u32(voxel_pos.x) + u32(voxel_pos.y) * 4 + u32(voxel_pos.z) * 4 * 4 + u32(voxel_pos.w) * 4 * 4 * 4;
+            if chunk.data[index].exists != 0 {
+                hit.hit = true;
+                hit.position = curr_pos;
+                hit.normal = vec4<f32>(-step_axis * step_dir);
+                hit.color = chunk.data[index].color;
+                return hit;
+            }
         }
     }
 
-    return vec3<f32>(0.0, 0.0, 1.0);
+    return hit;
 }
 
 @compute
@@ -70,6 +86,11 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
     ray.origin = vec4<f32>(-4.5, 0.5, -1.5, 0.5);
     ray.direction = normalize(vec4<f32>(1.0, normalized_uv.y * theta, normalized_uv.x * aspect * theta, 0.0));
 
-    let color = trace_ray(ray);
+    var color = vec3<f32>(0.0);
+    let hit = trace_ray(ray);
+    if hit.hit {
+        let sun_direction = normalize(vec4<f32>(0.3, -1.0, 0.2, 0.1));
+        color = hit.color * max((dot(hit.normal, -sun_direction) * 0.5 + 0.5), 0.2);
+    }
     textureStore(output_texture, coords, vec4<f32>(clamp(color, vec3<f32>(0.0), vec3<f32>(1.0)), 1.0));
 }
