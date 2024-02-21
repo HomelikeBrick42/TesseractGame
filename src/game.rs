@@ -44,7 +44,8 @@ pub struct Game {
     compute_pipeline: wgpu::ComputePipeline,
 
     movement_state: MovementState,
-    camera: Camera,
+    camera_transform: Rotor,
+    camera_vertical_look: Rotor,
     chunk: Chunk,
 }
 
@@ -226,10 +227,8 @@ impl Game {
             compute_pipeline,
 
             movement_state: MovementState::default(),
-            camera: Camera {
-                transform: Rotor::translation([-4.5, 0.5, -1.5, 0.5]),
-                v_fov: 90.0f32.to_radians(),
-            },
+            camera_transform: Rotor::translation([-4.5, 0.5, -1.5, 0.5]),
+            camera_vertical_look: Rotor::IDENTITY,
             chunk: Chunk {
                 data: std::array::from_fn(|i| {
                     if i % 3 == 0 {
@@ -268,9 +267,8 @@ impl Game {
                 KeyCode::KeyW => self.movement_state.forward = value,
                 KeyCode::KeyA => self.movement_state.left = value,
                 KeyCode::KeyD => self.movement_state.right = value,
-                KeyCode::KeyQ => self.movement_state.down = value,
-                KeyCode::KeyE => self.movement_state.up = value,
-                KeyCode::KeyR => self.movement_state.alternate_look = key_event.state.is_pressed(),
+                KeyCode::ShiftLeft => self.movement_state.down = value,
+                KeyCode::Space => self.movement_state.up = value,
                 _ => {}
             },
             PhysicalKey::Unidentified(_) => {}
@@ -279,27 +277,19 @@ impl Game {
     }
 
     pub fn mouse_input(&mut self, x: f32, y: f32) -> anyhow::Result<()> {
-        self.camera.transform = self.camera.transform * Rotor::rotation_xy(y * -0.001);
-        if self.movement_state.alternate_look {
-            self.camera.transform = self.camera.transform * Rotor::rotation_yz(x * 0.001);
-        } else {
-            self.camera.transform = self.camera.transform * Rotor::rotation_xz(x * 0.001);
-        }
+        self.camera_vertical_look = self.camera_vertical_look * Rotor::rotation_xy(y * -0.001);
+        self.camera_transform = self.camera_transform * Rotor::rotation_xz(x * 0.001);
         Ok(())
     }
 
     pub fn scroll(&mut self, _x: f32, y: f32) -> anyhow::Result<()> {
-        if self.movement_state.alternate_look {
-            self.camera.transform = self.camera.transform * Rotor::rotation_yw(y * 0.003);
-        } else {
-            self.camera.transform = self.camera.transform * Rotor::rotation_xw(y * 0.003);
-        }
+        self.camera_transform = self.camera_transform * Rotor::rotation_xw(y * 0.003);
         Ok(())
     }
 
     pub fn update(&mut self, dt: Duration) -> anyhow::Result<()> {
-        self.camera.transform =
-            self.camera.transform * self.movement_state.transform(dt.as_secs_f32());
+        self.camera_transform =
+            self.camera_transform * self.movement_state.transform(dt.as_secs_f32());
         Ok(())
     }
 
@@ -366,7 +356,10 @@ impl Game {
 
         {
             let mut buffer = UniformBuffer::new([0; Camera::SHADER_SIZE.get() as _]);
-            buffer.write(&self.camera)?;
+            buffer.write(&Camera {
+                transform: self.camera_transform * self.camera_vertical_look,
+                v_fov: 90.0f32.to_radians(),
+            })?;
             self.queue
                 .write_buffer(&self.camera_uniform_buffer, 0, &buffer.into_inner());
         }
@@ -422,7 +415,6 @@ struct MovementState {
     right: f32,
     up: f32,
     down: f32,
-    alternate_look: bool,
 }
 
 impl MovementState {
