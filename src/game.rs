@@ -225,14 +225,7 @@ impl Game {
             chunk_bind_group,
             compute_pipeline,
 
-            movement_state: MovementState {
-                forward: 0.0,
-                backward: 0.0,
-                left: 0.0,
-                right: 0.0,
-                up: 0.0,
-                down: 0.0,
-            },
+            movement_state: MovementState::default(),
             camera: Camera {
                 transform: Rotor::translation([-4.5, 0.5, -1.5, 0.5]),
                 v_fov: 90.0f32.to_radians(),
@@ -277,6 +270,7 @@ impl Game {
                 KeyCode::KeyD => self.movement_state.right = value,
                 KeyCode::KeyQ => self.movement_state.down = value,
                 KeyCode::KeyE => self.movement_state.up = value,
+                KeyCode::KeyR => self.movement_state.alternate_look = key_event.state.is_pressed(),
                 _ => {}
             },
             PhysicalKey::Unidentified(_) => {}
@@ -286,12 +280,20 @@ impl Game {
 
     pub fn mouse_input(&mut self, x: f32, y: f32) -> anyhow::Result<()> {
         self.camera.transform = self.camera.transform * Rotor::rotation_xy(y * -0.001);
-        self.camera.transform = self.camera.transform * Rotor::rotation_xz(x * 0.001);
+        if self.movement_state.alternate_look {
+            self.camera.transform = self.camera.transform * Rotor::rotation_yz(x * 0.001);
+        } else {
+            self.camera.transform = self.camera.transform * Rotor::rotation_xz(x * 0.001);
+        }
         Ok(())
     }
 
     pub fn scroll(&mut self, _x: f32, y: f32) -> anyhow::Result<()> {
-        self.camera.transform = self.camera.transform * Rotor::rotation_xw(y * 0.001);
+        if self.movement_state.alternate_look {
+            self.camera.transform = self.camera.transform * Rotor::rotation_yw(y * 0.003);
+        } else {
+            self.camera.transform = self.camera.transform * Rotor::rotation_xw(y * 0.003);
+        }
         Ok(())
     }
 
@@ -412,6 +414,7 @@ impl Game {
     }
 }
 
+#[derive(Default)]
 struct MovementState {
     forward: f32,
     backward: f32,
@@ -419,6 +422,7 @@ struct MovementState {
     right: f32,
     up: f32,
     down: f32,
+    alternate_look: bool,
 }
 
 impl MovementState {
