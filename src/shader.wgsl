@@ -85,7 +85,7 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
 
     var ray: Ray;
     ray.origin = transform(camera.transform, vec4<f32>(0.0, 0.0, 0.0, 0.0));
-    ray.direction = normalize(transform_direction(camera.transform, vec4<f32>(1.0, normalized_uv.y * theta, normalized_uv.x * aspect * theta, 0.0)));
+    ray.direction = normalize(transform_direction(camera.transform, vec4<f32>(1.0 + 0.0001, normalized_uv.y * theta + 0.0001, normalized_uv.x * aspect * theta + 0.0001, 0.0001)));
 
     var color = vec3<f32>(0.0);
     let hit = trace_ray(ray);

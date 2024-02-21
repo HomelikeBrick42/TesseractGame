@@ -6,9 +6,9 @@ use game::Game;
 use std::sync::Arc;
 use winit::{
     dpi::PhysicalSize,
-    event::{Event, StartCause, WindowEvent},
+    event::{DeviceEvent, Event, MouseScrollDelta, StartCause, WindowEvent},
     event_loop::{ControlFlow, EventLoop},
-    window::WindowBuilder,
+    window::{CursorGrabMode, WindowBuilder},
 };
 
 fn main() -> anyhow::Result<()> {
@@ -32,6 +32,8 @@ fn main() -> anyhow::Result<()> {
                 StartCause::Init => {
                     elwt.set_control_flow(ControlFlow::Poll);
                     window.set_visible(true);
+                    window.set_cursor_grab(CursorGrabMode::Confined).unwrap();
+                    window.set_cursor_visible(false);
                     last_time = std::time::Instant::now();
                 }
                 StartCause::Poll => {}
@@ -40,6 +42,7 @@ fn main() -> anyhow::Result<()> {
 
             let time = std::time::Instant::now();
             dt = time - last_time;
+            last_time = time;
         }
 
         Event::WindowEvent { window_id, event } if window_id == window.id() && !elwt.exiting() => {
@@ -68,9 +71,47 @@ fn main() -> anyhow::Result<()> {
                     }
                 },
 
+                WindowEvent::KeyboardInput {
+                    device_id: _,
+                    event,
+                    is_synthetic: _,
+                } => match game.input(event) {
+                    Ok(()) => {}
+                    Err(error) => {
+                        eprintln!("{error}");
+                        eprintln!("{}", error.backtrace());
+                        elwt.exit();
+                    }
+                },
+
                 _ => {}
             }
         }
+
+        Event::DeviceEvent {
+            device_id: _,
+            event,
+        } => match event {
+            DeviceEvent::MouseMotion { delta: (x, y) } => match game.mouse_input(x as _, y as _) {
+                Ok(()) => {}
+                Err(error) => {
+                    eprintln!("{error}");
+                    eprintln!("{}", error.backtrace());
+                    elwt.exit();
+                }
+            },
+            DeviceEvent::MouseWheel {
+                delta: MouseScrollDelta::LineDelta(x, y),
+            } => match game.scroll(x, y) {
+                Ok(()) => {}
+                Err(error) => {
+                    eprintln!("{error}");
+                    eprintln!("{}", error.backtrace());
+                    elwt.exit();
+                }
+            },
+            _ => {}
+        },
 
         Event::AboutToWait if !elwt.exiting() => {
             match game.update(dt) {

@@ -2,7 +2,12 @@ use crate::{color::Color, math::rotor::Rotor};
 use anyhow::{bail, Context};
 use encase::{ShaderSize, ShaderType, StorageBuffer, UniformBuffer};
 use std::{sync::Arc, time::Duration};
-use winit::{dpi::PhysicalSize, window::Window};
+use winit::{
+    dpi::PhysicalSize,
+    event::KeyEvent,
+    keyboard::{KeyCode, PhysicalKey},
+    window::Window,
+};
 
 #[derive(ShaderType)]
 struct Camera {
@@ -38,6 +43,8 @@ pub struct Game {
     chunk_bind_group: wgpu::BindGroup,
     compute_pipeline: wgpu::ComputePipeline,
 
+    movement_state: MovementState,
+    camera: Camera,
     chunk: Chunk,
 }
 
@@ -218,6 +225,18 @@ impl Game {
             chunk_bind_group,
             compute_pipeline,
 
+            movement_state: MovementState {
+                forward: 0.0,
+                backward: 0.0,
+                left: 0.0,
+                right: 0.0,
+                up: 0.0,
+                down: 0.0,
+            },
+            camera: Camera {
+                transform: Rotor::translation([-4.5, 0.5, -1.5, 0.5]),
+                v_fov: 90.0f32.to_radians(),
+            },
             chunk: Chunk {
                 data: std::array::from_fn(|i| {
                     if i % 3 == 0 {
@@ -244,7 +263,41 @@ impl Game {
         })
     }
 
-    pub fn update(&mut self, _dt: Duration) -> anyhow::Result<()> {
+    pub fn input(&mut self, key_event: KeyEvent) -> anyhow::Result<()> {
+        let value = if key_event.state.is_pressed() {
+            1.0
+        } else {
+            0.0
+        };
+        match key_event.physical_key {
+            PhysicalKey::Code(key_code) => match key_code {
+                KeyCode::KeyS => self.movement_state.backward = value,
+                KeyCode::KeyW => self.movement_state.forward = value,
+                KeyCode::KeyA => self.movement_state.left = value,
+                KeyCode::KeyD => self.movement_state.right = value,
+                KeyCode::KeyQ => self.movement_state.down = value,
+                KeyCode::KeyE => self.movement_state.up = value,
+                _ => {}
+            },
+            PhysicalKey::Unidentified(_) => {}
+        }
+        Ok(())
+    }
+
+    pub fn mouse_input(&mut self, x: f32, y: f32) -> anyhow::Result<()> {
+        self.camera.transform = self.camera.transform * Rotor::rotation_xy(y * -0.001);
+        self.camera.transform = self.camera.transform * Rotor::rotation_xz(x * 0.001);
+        Ok(())
+    }
+
+    pub fn scroll(&mut self, _x: f32, y: f32) -> anyhow::Result<()> {
+        self.camera.transform = self.camera.transform * Rotor::rotation_xw(y * 0.001);
+        Ok(())
+    }
+
+    pub fn update(&mut self, dt: Duration) -> anyhow::Result<()> {
+        self.camera.transform =
+            self.camera.transform * self.movement_state.transform(dt.as_secs_f32());
         Ok(())
     }
 
@@ -311,10 +364,7 @@ impl Game {
 
         {
             let mut buffer = UniformBuffer::new([0; Camera::SHADER_SIZE.get() as _]);
-            buffer.write(&Camera {
-                transform: Rotor::translation([-4.5, 0.5, -1.5, 0.5]),
-                v_fov: 90.0f32.to_radians(),
-            })?;
+            buffer.write(&self.camera)?;
             self.queue
                 .write_buffer(&self.camera_uniform_buffer, 0, &buffer.into_inner());
         }
@@ -359,5 +409,28 @@ impl Game {
         self.window.pre_present_notify();
         texture.present();
         Ok(())
+    }
+}
+
+struct MovementState {
+    forward: f32,
+    backward: f32,
+    left: f32,
+    right: f32,
+    up: f32,
+    down: f32,
+}
+
+impl MovementState {
+    fn transform(&self, dt: f32) -> Rotor {
+        Rotor::translation(
+            [
+                self.forward - self.backward,
+                self.up - self.down,
+                self.right - self.left,
+                0.0,
+            ]
+            .map(|m| m * 5.0 * dt),
+        )
     }
 }
