@@ -203,16 +203,6 @@ impl Game {
             entry_point: "main",
         });
 
-        if true {
-            println!(
-                "{:#?}",
-                (Rotor::rotation_xy(std::f32::consts::FRAC_PI_2)
-                    * Rotor::translation([1.0, 0.0, 0.0, 0.0]))
-                .transform([0.0, 0.0, 0.0, 0.0])
-            );
-            std::process::exit(0)
-        }
-
         Ok(Game {
             window,
             device,

@@ -46,10 +46,10 @@ impl Rotor {
         let [x, y, z, w] = offset;
         Rotor {
             s: 1.0,
-            e01: w * 0.5,
-            e02: z * -0.5,
-            e03: y * 0.5,
-            e04: x * -0.5,
+            e01: x * 0.5,
+            e02: y * -0.5,
+            e03: z * 0.5,
+            e04: w * -0.5,
             e12: 0.0,
             e13: 0.0,
             e14: 0.0,
@@ -78,6 +78,116 @@ impl Rotor {
             e23: 0.0,
             e24: 0.0,
             e34: 0.0,
+            e0123: 0.0,
+            e0124: 0.0,
+            e0134: 0.0,
+            e0234: 0.0,
+            e1234: 0.0,
+        }
+    }
+
+    pub fn rotation_xz(angle: f32) -> Rotor {
+        let (sin, cos) = (angle * 0.5).sin_cos();
+        Rotor {
+            s: cos,
+            e01: 0.0,
+            e02: 0.0,
+            e03: 0.0,
+            e04: 0.0,
+            e12: 0.0,
+            e13: sin,
+            e14: 0.0,
+            e23: 0.0,
+            e24: 0.0,
+            e34: 0.0,
+            e0123: 0.0,
+            e0124: 0.0,
+            e0134: 0.0,
+            e0234: 0.0,
+            e1234: 0.0,
+        }
+    }
+
+    pub fn rotation_xw(angle: f32) -> Rotor {
+        let (sin, cos) = (angle * 0.5).sin_cos();
+        Rotor {
+            s: cos,
+            e01: 0.0,
+            e02: 0.0,
+            e03: 0.0,
+            e04: 0.0,
+            e12: 0.0,
+            e13: 0.0,
+            e14: sin,
+            e23: 0.0,
+            e24: 0.0,
+            e34: 0.0,
+            e0123: 0.0,
+            e0124: 0.0,
+            e0134: 0.0,
+            e0234: 0.0,
+            e1234: 0.0,
+        }
+    }
+
+    pub fn rotation_yz(angle: f32) -> Rotor {
+        let (sin, cos) = (angle * 0.5).sin_cos();
+        Rotor {
+            s: cos,
+            e01: 0.0,
+            e02: 0.0,
+            e03: 0.0,
+            e04: 0.0,
+            e12: 0.0,
+            e13: 0.0,
+            e14: 0.0,
+            e23: sin,
+            e24: 0.0,
+            e34: 0.0,
+            e0123: 0.0,
+            e0124: 0.0,
+            e0134: 0.0,
+            e0234: 0.0,
+            e1234: 0.0,
+        }
+    }
+
+    pub fn rotation_yw(angle: f32) -> Rotor {
+        let (sin, cos) = (angle * 0.5).sin_cos();
+        Rotor {
+            s: cos,
+            e01: 0.0,
+            e02: 0.0,
+            e03: 0.0,
+            e04: 0.0,
+            e12: 0.0,
+            e13: 0.0,
+            e14: 0.0,
+            e23: 0.0,
+            e24: sin,
+            e34: 0.0,
+            e0123: 0.0,
+            e0124: 0.0,
+            e0134: 0.0,
+            e0234: 0.0,
+            e1234: 0.0,
+        }
+    }
+
+    pub fn rotation_zw(angle: f32) -> Rotor {
+        let (sin, cos) = (angle * 0.5).sin_cos();
+        Rotor {
+            s: cos,
+            e01: 0.0,
+            e02: 0.0,
+            e03: 0.0,
+            e04: 0.0,
+            e12: 0.0,
+            e13: 0.0,
+            e14: 0.0,
+            e23: 0.0,
+            e24: 0.0,
+            e34: sin,
             e0123: 0.0,
             e0124: 0.0,
             e0134: 0.0,
@@ -153,7 +263,7 @@ impl Rotor {
             e0234: p,
             e1234: q,
         } = self;
-        let [p0, p1, p2, p3] = point;
+        let [p3, p2, p1, p0] = point;
         let ap2 = a * p2;
         let gp3 = g * p3;
         let jp1 = j * p1;
@@ -174,7 +284,7 @@ impl Rotor {
         let s1 = ap3 + b + hp1 - gp2 - ip0;
         let s2 = ap1 + d + jp2 - lp0 - hp3;
         let s3 = f + kp2 - ap0 - lp1 - ip3;
-        [
+        let mut result = [
             p0 + 2.0
                 * (q * (m + g * p1 + h * p2 + j * p3 - q * p0) + k * s0 + i * s1 + l * s2
                     - a * f
@@ -202,7 +312,9 @@ impl Rotor {
                     + i * s3
                     + h * s2
                     + g * s0),
-        ]
+        ];
+        result.reverse();
+        result
     }
 
     pub fn transform_direction(self, normal: [f32; 4]) -> [f32; 4] {
@@ -224,7 +336,7 @@ impl Rotor {
             e0234: _,
             e1234: p,
         } = self;
-        let [p0, p1, p2, p3] = normal;
+        let [p3, p2, p1, p0] = normal;
         let ap2 = a * p2;
         let fp3 = f * p3;
         let ip1 = i * p1;
@@ -245,12 +357,14 @@ impl Rotor {
         let s1 = ap3 + gp1 - fp2 - hp0;
         let s2 = ap1 + ip2 - kp0 - gp3;
         let s3 = jp2 - ap0 - kp1 - hp3;
-        [
+        let mut result = [
             p0 + 2.0 * (p * (f * p1 + g * p2 + i * p3 - p * p0) + j * s0 + h * s1 + k * s2),
             p1 + 2.0 * (p * (h * p2 + j * p3 - p * p1 - f * p0) + k * s3 - i * s0 - g * s1),
             p2 + 2.0 * (p * (k * p3 - p * p2 - g * p0 - h * p1) + f * s1 - j * s3 - i * s2),
             p3 + 2.0 * (h * s3 + g * s2 + f * s0 - p * (k * p2 + p * p3 + i * p0 + j * p1)),
-        ]
+        ];
+        result.reverse();
+        result
     }
 }
 
