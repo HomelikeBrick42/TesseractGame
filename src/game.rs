@@ -1,4 +1,4 @@
-use crate::color::Color;
+use crate::{color::Color, math::rotor::Rotor};
 use anyhow::{bail, Context};
 use encase::{ShaderSize, ShaderType, StorageBuffer, UniformBuffer};
 use std::{sync::Arc, time::Duration};
@@ -6,6 +6,7 @@ use winit::{dpi::PhysicalSize, window::Window};
 
 #[derive(ShaderType)]
 struct Camera {
+    transform: Rotor,
     v_fov: f32,
 }
 
@@ -202,6 +203,16 @@ impl Game {
             entry_point: "main",
         });
 
+        if true {
+            println!(
+                "{:#?}",
+                (Rotor::rotation_xy(std::f32::consts::FRAC_PI_2)
+                    * Rotor::translation([1.0, 0.0, 0.0, 0.0]))
+                .transform([0.0, 0.0, 0.0, 0.0])
+            );
+            std::process::exit(0)
+        }
+
         Ok(Game {
             window,
             device,
@@ -311,6 +322,7 @@ impl Game {
         {
             let mut buffer = UniformBuffer::new([0; Camera::SHADER_SIZE.get() as _]);
             buffer.write(&Camera {
+                transform: Rotor::translation([-4.5, 0.5, -1.5, 0.5]),
                 v_fov: 90.0f32.to_radians(),
             })?;
             self.queue

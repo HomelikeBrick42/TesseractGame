@@ -42,6 +42,50 @@ impl Rotor {
         e1234: 0.0,
     };
 
+    pub fn translation(offset: [f32; 4]) -> Rotor {
+        let [x, y, z, w] = offset;
+        Rotor {
+            s: 1.0,
+            e01: w * 0.5,
+            e02: z * -0.5,
+            e03: y * 0.5,
+            e04: x * -0.5,
+            e12: 0.0,
+            e13: 0.0,
+            e14: 0.0,
+            e23: 0.0,
+            e24: 0.0,
+            e34: 0.0,
+            e0123: 0.0,
+            e0124: 0.0,
+            e0134: 0.0,
+            e0234: 0.0,
+            e1234: 0.0,
+        }
+    }
+
+    pub fn rotation_xy(angle: f32) -> Rotor {
+        let (sin, cos) = (angle * 0.5).sin_cos();
+        Rotor {
+            s: cos,
+            e01: 0.0,
+            e02: 0.0,
+            e03: 0.0,
+            e04: 0.0,
+            e12: sin,
+            e13: 0.0,
+            e14: 0.0,
+            e23: 0.0,
+            e24: 0.0,
+            e34: 0.0,
+            e0123: 0.0,
+            e0124: 0.0,
+            e0134: 0.0,
+            e0234: 0.0,
+            e1234: 0.0,
+        }
+    }
+
     pub fn magnitude_squared(self) -> f32 {
         (!self * self).s
     }
@@ -161,7 +205,7 @@ impl Rotor {
         ]
     }
 
-    pub fn transform_normal(self, normal: [f32; 4]) -> [f32; 4] {
+    pub fn transform_direction(self, normal: [f32; 4]) -> [f32; 4] {
         let Rotor {
             s: a,
             e01: _,
