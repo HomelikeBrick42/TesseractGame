@@ -269,6 +269,8 @@ impl Game {
                 KeyCode::KeyD => self.movement_state.right = value,
                 KeyCode::ShiftLeft => self.movement_state.down = value,
                 KeyCode::Space => self.movement_state.up = value,
+                KeyCode::KeyQ => self.movement_state.kata = value,
+                KeyCode::KeyE => self.movement_state.ana = value,
                 _ => {}
             },
             PhysicalKey::Unidentified(_) => {}
@@ -415,6 +417,8 @@ struct MovementState {
     right: f32,
     up: f32,
     down: f32,
+    ana: f32,
+    kata: f32,
 }
 
 impl MovementState {
@@ -424,7 +428,7 @@ impl MovementState {
                 self.forward - self.backward,
                 self.up - self.down,
                 self.right - self.left,
-                0.0,
+                self.ana - self.kata,
             ]
             .map(|m| m * 5.0 * dt),
         )
