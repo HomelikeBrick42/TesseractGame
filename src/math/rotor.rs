@@ -89,6 +89,125 @@ impl Rotor {
             e1234: e1234 * inverse_magnitude,
         }
     }
+
+    pub fn transform(self, point: [f32; 4]) -> [f32; 4] {
+        let Rotor {
+            s: a,
+            e01: b,
+            e02: c,
+            e03: d,
+            e04: f,
+            e12: g,
+            e13: h,
+            e14: i,
+            e23: j,
+            e24: k,
+            e34: l,
+            e0123: m,
+            e0124: n,
+            e0134: o,
+            e0234: p,
+            e1234: q,
+        } = self;
+        let [p0, p1, p2, p3] = point;
+        let ap2 = a * p2;
+        let gp3 = g * p3;
+        let jp1 = j * p1;
+        let kp0 = k * p0;
+        let ap3 = a * p3;
+        let gp2 = g * p2;
+        let hp1 = h * p1;
+        let ip0 = i * p0;
+        let ap1 = a * p1;
+        let lp0 = l * p0;
+        let hp3 = h * p3;
+        let jp2 = j * p2;
+        let ap0 = a * p0;
+        let lp1 = l * p1;
+        let ip3 = i * p3;
+        let kp2 = k * p2;
+        let s0 = c + jp1 - ap2 - gp3 - kp0;
+        let s1 = ap3 + b + hp1 - gp2 - ip0;
+        let s2 = ap1 + d + jp2 - lp0 - hp3;
+        let s3 = f + kp2 - ap0 - lp1 - ip3;
+        [
+            p0 + 2.0
+                * (q * (m + g * p1 + h * p2 + j * p3 - q * p0) + k * s0 + i * s1 + l * s2
+                    - a * f
+                    - n * g
+                    - o * h
+                    - p * j),
+            p1 + 2.0
+                * (a * d + m * g + q * (n + i * p2 + k * p3 - q * p1 - g * p0) + l * s3
+                    - o * i
+                    - p * k
+                    - j * s0
+                    - h * s1),
+            p2 + 2.0
+                * (m * h + n * i + q * (l * p3 + o - q * p2 - h * p0 - i * p1) + g * s1
+                    - a * c
+                    - l * p
+                    - k * s3
+                    - j * s2),
+            p3 + 2.0
+                * (a * b
+                    + l * o
+                    + m * j
+                    + n * k
+                    + q * (p - l * p2 - q * p3 - j * p0 - k * p1)
+                    + i * s3
+                    + h * s2
+                    + g * s0),
+        ]
+    }
+
+    pub fn transform_normal(self, normal: [f32; 4]) -> [f32; 4] {
+        let Rotor {
+            s: a,
+            e01: _,
+            e02: _,
+            e03: _,
+            e04: _,
+            e12: f,
+            e13: g,
+            e14: h,
+            e23: i,
+            e24: j,
+            e34: k,
+            e0123: _,
+            e0124: _,
+            e0134: _,
+            e0234: _,
+            e1234: p,
+        } = self;
+        let [p0, p1, p2, p3] = normal;
+        let ap2 = a * p2;
+        let fp3 = f * p3;
+        let ip1 = i * p1;
+        let jp0 = j * p0;
+        let ap3 = a * p3;
+        let fp2 = f * p2;
+        let gp1 = g * p1;
+        let hp0 = h * p0;
+        let ap1 = a * p1;
+        let kp0 = k * p0;
+        let gp3 = g * p3;
+        let ip2 = i * p2;
+        let ap0 = a * p0;
+        let kp1 = k * p1;
+        let hp3 = h * p3;
+        let jp2 = j * p2;
+        let s0 = ip1 - ap2 - fp3 - jp0;
+        let s1 = ap3 + gp1 - fp2 - hp0;
+        let s2 = ap1 + ip2 - kp0 - gp3;
+        let s3 = jp2 - ap0 - kp1 - hp3;
+        [
+            p0 + 2.0 * (p * (f * p1 + g * p2 + i * p3 - p * p0) + j * s0 + h * s1 + k * s2),
+            p1 + 2.0 * (p * (h * p2 + j * p3 - p * p1 - f * p0) + k * s3 - i * s0 - g * s1),
+            p2 + 2.0 * (p * (k * p3 - p * p2 - g * p0 - h * p1) + f * s1 - j * s3 - i * s2),
+            p3 + 2.0 * (h * s3 + g * s2 + f * s0 - p * (k * p2 + p * p3 + i * p0 + j * p1)),
+        ]
+    }
 }
 
 impl Not for Rotor {
