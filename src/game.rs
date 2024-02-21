@@ -255,7 +255,7 @@ impl Game {
         })
     }
 
-    pub fn input(&mut self, key_event: KeyEvent) -> anyhow::Result<()> {
+    pub fn keyboard(&mut self, key_event: KeyEvent) -> anyhow::Result<()> {
         let value = if key_event.state.is_pressed() {
             1.0
         } else {
@@ -276,14 +276,14 @@ impl Game {
         Ok(())
     }
 
-    pub fn mouse_input(&mut self, x: f32, y: f32) -> anyhow::Result<()> {
+    pub fn cursor(&mut self, x: f32, y: f32) -> anyhow::Result<()> {
         self.camera_vertical_look = self.camera_vertical_look * Rotor::rotation_xy(y * -0.001);
         self.camera_transform = self.camera_transform * Rotor::rotation_xz(x * 0.001);
         Ok(())
     }
 
     pub fn scroll(&mut self, _x: f32, y: f32) -> anyhow::Result<()> {
-        self.camera_transform = self.camera_transform * Rotor::rotation_xw(y * 0.003);
+        self.camera_transform = self.camera_transform * Rotor::rotation_xw(y * 0.01);
         Ok(())
     }
 

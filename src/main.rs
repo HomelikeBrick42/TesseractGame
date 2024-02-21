@@ -75,7 +75,7 @@ fn main() -> anyhow::Result<()> {
                     device_id: _,
                     event,
                     is_synthetic: _,
-                } => match game.input(event) {
+                } => match game.keyboard(event) {
                     Ok(()) => {}
                     Err(error) => {
                         eprintln!("{error}");
@@ -92,7 +92,7 @@ fn main() -> anyhow::Result<()> {
             device_id: _,
             event,
         } => match event {
-            DeviceEvent::MouseMotion { delta: (x, y) } => match game.mouse_input(x as _, y as _) {
+            DeviceEvent::MouseMotion { delta: (x, y) } => match game.cursor(x as _, y as _) {
                 Ok(()) => {}
                 Err(error) => {
                     eprintln!("{error}");
