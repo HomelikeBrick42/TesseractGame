@@ -1,4 +1,4 @@
-use crate::{color::Color, math::rotor::Rotor};
+use crate::{color::Color, math::transform::Transform};
 use anyhow::{bail, Context};
 use encase::{ShaderSize, ShaderType, StorageBuffer, UniformBuffer};
 use std::{sync::Arc, time::Duration};
@@ -11,7 +11,7 @@ use winit::{
 
 #[derive(ShaderType)]
 struct Camera {
-    transform: Rotor,
+    transform: Transform,
     v_fov: f32,
 }
 
@@ -44,8 +44,8 @@ pub struct Game {
     compute_pipeline: wgpu::ComputePipeline,
 
     movement_state: MovementState,
-    camera_transform: Rotor,
-    camera_vertical_look: Rotor,
+    camera_transform: Transform,
+    camera_vertical_look: Transform,
     chunk: Chunk,
 }
 
@@ -227,8 +227,8 @@ impl Game {
             compute_pipeline,
 
             movement_state: MovementState::default(),
-            camera_transform: Rotor::translation([-4.5, 0.5, -1.5, 0.5]),
-            camera_vertical_look: Rotor::IDENTITY,
+            camera_transform: Transform::translation([-4.5, 0.5, -1.5, 0.5]),
+            camera_vertical_look: Transform::IDENTITY,
             chunk: Chunk {
                 data: std::array::from_fn(|i| {
                     if i % 3 == 0 {
@@ -279,13 +279,13 @@ impl Game {
     }
 
     pub fn cursor(&mut self, x: f32, y: f32) -> anyhow::Result<()> {
-        self.camera_vertical_look = self.camera_vertical_look * Rotor::rotation_xy(y * -0.001);
-        self.camera_transform = self.camera_transform * Rotor::rotation_xz(x * 0.001);
+        self.camera_vertical_look = self.camera_vertical_look * Transform::rotation_xy(y * -0.001);
+        self.camera_transform = self.camera_transform * Transform::rotation_xz(x * 0.001);
         Ok(())
     }
 
     pub fn scroll(&mut self, _x: f32, y: f32) -> anyhow::Result<()> {
-        self.camera_transform = self.camera_transform * Rotor::rotation_xw(y * 0.01);
+        self.camera_transform = self.camera_transform * Transform::rotation_xw(y * 0.01);
         Ok(())
     }
 
@@ -422,8 +422,8 @@ struct MovementState {
 }
 
 impl MovementState {
-    fn transform(&self, dt: f32) -> Rotor {
-        Rotor::translation(
+    fn transform(&self, dt: f32) -> Transform {
+        Transform::translation(
             [
                 self.forward - self.backward,
                 self.up - self.down,

@@ -3,7 +3,7 @@
 var output_texture: texture_storage_2d<rgba8unorm, write>;
 
 struct Camera {
-    transform: Rotor,
+    transform: Transform,
     v_fov: f32,
 }
 
@@ -96,7 +96,7 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
     textureStore(output_texture, coords, vec4<f32>(clamp(color, vec3<f32>(0.0), vec3<f32>(1.0)), 1.0));
 }
 
-struct Rotor {
+struct Transform {
     s: f32,
     e01: f32,
     e02: f32,
@@ -115,23 +115,23 @@ struct Rotor {
     e1234: f32,
 }
 
-fn transform(rotor: Rotor, point: vec4<f32>) -> vec4<f32> {
-    let a = rotor.s;
-    let b = rotor.e01;
-    let c = rotor.e02;
-    let d = rotor.e03;
-    let f = rotor.e04;
-    let g = rotor.e12;
-    let h = rotor.e13;
-    let i = rotor.e14;
-    let j = rotor.e23;
-    let k = rotor.e24;
-    let l = rotor.e34;
-    let m = rotor.e0123;
-    let n = rotor.e0124;
-    let o = rotor.e0134;
-    let p = rotor.e0234;
-    let q = rotor.e1234;
+fn transform(transform: Transform, point: vec4<f32>) -> vec4<f32> {
+    let a = transform.s;
+    let b = transform.e01;
+    let c = transform.e02;
+    let d = transform.e03;
+    let f = transform.e04;
+    let g = transform.e12;
+    let h = transform.e13;
+    let i = transform.e14;
+    let j = transform.e23;
+    let k = transform.e24;
+    let l = transform.e34;
+    let m = transform.e0123;
+    let n = transform.e0124;
+    let o = transform.e0134;
+    let p = transform.e0234;
+    let q = transform.e1234;
     let p0 = point.w;
     let p1 = point.z;
     let p2 = point.y;
@@ -164,15 +164,15 @@ fn transform(rotor: Rotor, point: vec4<f32>) -> vec4<f32> {
     ).wzyx;
 }
 
-fn transform_direction(rotor: Rotor, normal: vec4<f32>) -> vec4<f32> {
-    let a = rotor.s;
-    let f = rotor.e12;
-    let g = rotor.e13;
-    let h = rotor.e14;
-    let i = rotor.e23;
-    let j = rotor.e24;
-    let k = rotor.e34;
-    let p = rotor.e1234;
+fn transform_direction(transform: Transform, normal: vec4<f32>) -> vec4<f32> {
+    let a = transform.s;
+    let f = transform.e12;
+    let g = transform.e13;
+    let h = transform.e14;
+    let i = transform.e23;
+    let j = transform.e24;
+    let k = transform.e34;
+    let p = transform.e1234;
     let p0 = normal.w;
     let p1 = normal.z;
     let p2 = normal.y;
